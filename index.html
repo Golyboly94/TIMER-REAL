@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timer App</title>
+  <style>
+    /* ---------- Base Styles ---------- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(12px);
+      padding: 50px 60px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 { margin-bottom: 30px; font-weight: 300; letter-spacing: 4px; }
+
+    /* ---------- Timer Display ---------- */
+    .timer-display {
+      font-size: 5rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 4px;
+      margin-bottom: 40px;
+      text-shadow: 0 0 20px rgba(0, 198, 255, 0.4);
+    }
+
+    /* ---------- Buttons ---------- */
+    .buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+    .btn {
+      padding: 14px 36px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      letter-spacing: 1px;
+    }
+
+    .btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-start { background: #00c853; color: #fff; }
+    .btn-stop  { background: #ff1744; color: #fff; }
+    .btn-reset { background: #ffffff22; color: #fff; border: 1px solid #ffffff55; }
+    .btn-lap   { background: #2979ff; color: #fff; }
+
+    /* ---------- Lap List ---------- */
+    .laps {
+      margin-top: 30px;
+      max-height: 200px;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .laps ul { list-style: none; }
+
+    .laps li {
+      padding: 8px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-variant-numeric: tabular-nums;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .laps li span.label { opacity: 0.6; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>TIMER</h1>
+
+  <div class="timer-display" id="display">00:00:00.00</div>
+
+  <div class="buttons">
+    <button class="btn btn-start" id="startBtn" onclick="startTimer()">START</button>
+    <button class="btn btn-stop"  id="stopBtn"  onclick="stopTimer()" disabled>STOP</button>
+    <button class="btn btn-lap"   id="lapBtn"   onclick="recordLap()" disabled>LAP</button>
+    <button class="btn btn-reset" id="resetBtn"  onclick="resetTimer()">RESET</button>
+  </div>
+
+  <div class="laps" id="laps">
+    <ul id="lapList"></ul>
+  </div>
+</div>
+
+<script>
+  // ---- State ----
+  let timerInterval = null;
+  let startTime     = 0;
+  let elapsedTime   = 0;   // ms accumulated before current run
+  let lapCount      = 0;
+
+  const display  = document.getElementById('display');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn  = document.getElementById('stopBtn');
+  const lapBtn   = document.getElementById('lapBtn');
+  const lapList  = document.getElementById('lapList');
+
+  // ---- Helpers ----
+  function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours   = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    const centis  = String(Math.floor((ms % 1000) / 10)).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}.${centis}`;
+  }
+
+  function updateDisplay() {
+    const current = elapsedTime + (Date.now() - startTime);
+    display.textContent = formatTime(current);
+  }
+
+  // ---- Controls ----
+  function startTimer() {
+    startTime = Date.now();
+    timerInterval = setInterval(updateDisplay, 10);
+    startBtn.disabled = true;
+    stopBtn.disabled  = false;
+    lapBtn.disabled   = false;
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    elapsedTime += Date.now() - startTime;
+    startBtn.disabled = false;
+    stopBtn.disabled  = true;
+    lapBtn.disabled   = true;
+  }
+
+  function resetTimer() {
+    clearInterval(timerInterval);
+    elapsedTime = 0;
+    lapCount    = 0;
+    display.textContent = '00:00:00.00';
+    lapList.innerHTML   = '';
+    startBtn.disabled = false;
+    stopBtn.disabled  = true;
+    lapBtn.disabled   = true;
+  }
+
+  function recordLap() {
+    lapCount++;
+    const current = elapsedTime + (Date.now() - startTime);
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="label">Lap ${lapCount}</span><span>${formatTime(current)}</span>`;
+    lapList.prepend(li);
+  }
+</script>
+
+</body>
+</html>
